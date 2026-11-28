@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>FinTrack · Pelacak Keuangan</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: #f3f6fc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    .app-card {
+      max-width: 900px;
+      width: 100%;
+      background: white;
+      border-radius: 2rem;
+      box-shadow: 0 20px 35px -8px rgba(0, 20, 50, 0.15), 0 8px 18px -6px rgba(0, 0, 0, 0.05);
+      padding: 1.8rem 1.8rem 2.2rem;
+    }
+    .back { display: inline-block; margin-bottom: 1rem; color: #1a4c8c; text-decoration: none; font-size: .9rem; }
+    h1 {
+      font-size: 1.9rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: #0b1e3a;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+    h1 span {
+      background: #e8f0fe;
+      font-size: 1.2rem;
+      padding: 0.25rem 0.8rem;
+      border-radius: 40px;
+      color: #1a4c8c;
+      font-weight: 500;
+    }
+    .subhead {
+      color: #52637a;
+      font-size: 0.95rem;
+      margin-bottom: 1.8rem;
+      border-left: 3px solid #3b82f6;
+      padding-left: 0.9rem;
+    }
+    /* Balance & summary */
+    .summary-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      background: #f9fcff;
+      border-radius: 1.8rem;
+      padding: 1.4rem 1.2rem;
+      margin-bottom: 2rem;
+      border: 1px solid #e2edff;
+    }
+    .balance-box {
+      flex: 2;
+      min-width: 180px;
+    }
+    .balance-label {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: #3b5f8a;
+      font-weight: 500;
+    }
+    .balance-amount {
+      font-size: 2.3rem;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #0a2540;
+      margin-top: 0.15rem;
+      word-break: break-word;
+    }
+    .balance-amount.negative {
+      color: #b91c1c;
+    }
+    .income-expense-box {
+      flex: 1.2;
+      min-width: 160px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0.6rem;
+    }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 1rem;
+    }
+    .stat-label {
+      color: #4b5e77;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .stat-label i {
+      font-style: normal;
+      font-size: 1.1rem;
+    }
+    .stat-value {
+      font-weight: 650;
+    }
+    .income .stat-value {
+      color: #0f7b3e;
+    }
+    .expense .stat-value {
+      color: #b23b3b;
+    }
+    /* form */
+    .form-title {
+      font-weight: 600;
+      font-size: 1.2rem;
+      color: #142b4b;
+      margin-bottom: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .entry-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      margin-bottom: 2.2rem;
+      background: #ffffff;
+      padding: 0.2rem 0;
+    }
+    .input-group {
+      flex: 1 0 150px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .input-group label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      color: #476085;
+    }
+    .input-group input, .input-group select {
+      background: #f2f6fd;
+      border: 1px solid #d9e5f5;
+      border-radius: 1rem;
+      padding: 0.8rem 1rem;
+      font-size: 0.95rem;
+      outline: none;
+      transition: 0.15s;
+      width: 100%;
+    }
+    .input-group input:focus, .input-group select:focus {
+      border-color: #3b82f6;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+    .input-group input[type="number"] {
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+    .input-group input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+    }
+    .btn-primary {
+      background: #0e2e5c;
+      border: none;
+      border-radius: 2rem;
+      padding: 0.9rem 2rem;
+      color: white;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: 0.15s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      box-shadow: 0 6px 14px rgba(14, 46, 92, 0.2);
+      height: fit-content;
+      align-self: flex-end;
+      margin-bottom: 1px;
+      flex: 1 0 140px;
+    }
+    .btn-primary:hover {
+      background: #1b3f74;
+      transform: scale(0.98);
+      box-shadow: 0 3px 8px rgba(14, 46, 92, 0.25);
+    }
+    .btn-primary:active {
+      transform: scale(0.96);
+    }
+    /* transactions header */
+    .list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 1.6rem 0 1rem;
+    }
+    .list-header h2 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #142b4b;
+    }
+    .clear-btn {
+      background: none;
+      border: 1px solid #cddef5;
+      border-radius: 2rem;
+      padding: 0.4rem 1.2rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #3a5b81;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .clear-btn:hover {
+      background: #edf3fe;
+      border-color: #9bb9e0;
+    }
+    /* transaction list */
+    .transaction-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      max-height: 360px;
+      overflow-y: auto;
+      padding-right: 0.3rem;
+    }
+    .transaction-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fbfdff;
+      border: 1px solid #e4edfb;
+      border-radius: 1.2rem;
+      padding: 0.9rem 1.4rem;
+      transition: 0.1s;
+    }
+    .transaction-item:hover {
+      background: #f4faff;
+      border-color: #c7daf5;
+    }
+    .tx-left {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      flex: 1;
+    }
+    .tx-desc {
+      font-weight: 600;
+      color: #0b1f37;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .tx-category {
+      font-size: 0.7rem;
+      background: #e3eefc;
+      padding: 0.2rem 0.7rem;
+      border-radius: 30px;
+      color: #225188;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      text-transform: capitalize;
+    }
+    .tx-date {
+      font-size: 0.7rem;
+      color: #7087a3;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .tx-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-shrink: 0;
+    }
+    .tx-amount {
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: -0.01em;
+    }
+    .tx-amount.income {
+      color: #0f7b3e;
+    }
+    .tx-amount.expense {
+      color: #c02b2b;
+    }
+    .delete-btn {
+      background: none;
+      border: none;
+      font-size: 1.3rem;
+      line-height: 1;
+      color: #9aafc6;
+      cursor: pointer;
+      padding: 0 0.2rem;
+      transition: 0.1s;
+      font-weight: 500;
+      opacity: 0.7;
+    }
+    .delete-btn:hover {
+      color: #c02b2b;
+      opacity: 1;
+      transform: scale(1.1);
+    }
+    .empty-state {
+      text-align: center;
+      color: #8a9eb8;
+      padding: 2rem 1rem;
+      font-size: 1rem;
+      background: #fafdff;
+      border-radius: 1.5rem;
+      border: 1px dashed #cfdef2;
+    }
+    /* toast */
+    .toast-msg {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1f3b5c;
+      color: white;
+      padding: 0.7rem 1.5rem;
+      border-radius: 40px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    .toast-msg.show {
+      opacity: 1;
+    }
+    /* scroll */
+    .transaction-list::-webkit-scrollbar {
+      width: 6px;
+    }
+    .transaction-list::-webkit-scrollbar-track {
+      background: #edf3fc;
+      border-radius: 10px;
+    }
+    .transaction-list::-webkit-scrollbar-thumb {
+      background: #b8cce6;
+      border-radius: 10px;
+    }
+    @media (max-width: 550px) {
+      .app-card { padding: 1.3rem; }
+      .balance-amount { font-size: 1.9rem; }
+      .btn-primary { width: 100%; }
+      .transaction-item { padding: 0.8rem 1rem; }
+      .tx-amount { font-size: 0.95rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-card" id="app">
+    <a class="back" href="graph.html">← Menuju Graph view</a>
+    <h1>
+      💰 FinTrack
+      <span>IDR</span>
+    </h1>
+    <div class="subhead">Catat pemasukan & pengeluaran — simpel, privat, langsung di browser.</div>
+
+    <!-- Balance & summary -->
+    <div class="summary-grid">
+      <div class="balance-box">
+        <div class="balance-label">Saldo saat ini</div>
+        <div class="balance-amount" id="balanceDisplay">Rp 0</div>
+      </div>
+      <div class="income-expense-box">
+        <div class="stat-row income">
+          <span class="stat-label"><i>⬆️</i> Pemasukan</span>
+          <span class="stat-value" id="totalIncome">Rp 0</span>
+        </div>
+        <div class="stat-row expense">
+          <span class="stat-label"><i>⬇️</i> Pengeluaran</span>
+          <span class="stat-value" id="totalExpense">Rp 0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add transaction -->
+    <div class="form-title">➕ Tambah transaksi</div>
+    <div class="entry-form">
+      <div class="input-group">
+        <label>Deskripsi</label>
+        <input type="text" id="descInput" placeholder="cth: Makan siang, Gaji" maxlength="40" autocomplete="off">
+      </div>
+      <div class="input-group">
+        <label>Jumlah (Rp)</label>
+        <input type="number" id="amountInput" placeholder="0" min="1" step="1">
+      </div>
+      <div class="input-group">
+        <label>Tipe</label>
+        <select id="typeSelect">
+          <option value="expense">Pengeluaran</option>
+          <option value="income">Pemasukan</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Kategori</label>
+        <select id="categorySelect">
+          <option value="makanan">🍔 Makanan</option>
+          <option value="transportasi">🚗 Transportasi</option>
+          <option value="belanja">🛍️ Belanja</option>
+          <option value="tagihan">📄 Tagihan</option>
+          <option value="hiburan">🎬 Hiburan</option>
+          <option value="gaji">💼 Gaji</option>
+          <option value="lainnya">📦 Lainnya</option>
+        </select>
+      </div>
+      <button class="btn-primary" id="addBtn">Tambah</button>
+    </div>
+
+    <!-- Transactions list -->
+    <div class="list-header">
+      <h2>📋 Transaksi terakhir</h2>
+      <button class="clear-btn" id="clearAllBtn">Hapus semua</button>
+    </div>
+    <div class="transaction-list" id="transactionList">
+      <!-- dynamic transactions will be inserted here -->
+    </div>
+  </div>
+
+  <!-- toast notification -->
+  <div class="toast-msg" id="toast"></div>
+
+  <script>
+    (function() {
+      // ---------- data store ----------
+      let transactions = [];
+
+      // load from localStorage
+      const STORAGE_KEY = 'fin_tracker_idr_transactions';
+      function loadFromStorage() {
+        try {
+          const stored = localStorage.getItem(STORAGE_KEY);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed)) {
+              transactions = parsed;
+            } else {
+              transactions = [];
+            }
+          } else {
+            // seed demo data for first run (in IDR)
+            transactions = [
+              { id: 'seed1', description: 'Gaji bulanan', amount: 8500000, type: 'income', category: 'gaji', date: new Date().toISOString() },
+              { id: 'seed2', description: 'Belanja mingguan', amount: 275000, type: 'expense', category: 'makanan', date: new Date(Date.now() - 86400000).toISOString() },
+              { id: 'seed3', description: 'Bensin', amount: 150000, type: 'expense', category: 'transportasi', date: new Date(Date.now() - 172800000).toISOString() },
+              { id: 'seed4', description: 'Langganan streaming', amount: 54000, type: 'expense', category: 'hiburan', date: new Date(Date.now() - 259200000).toISOString() },
+              { id: 'seed5', description: 'Proyek freelance', amount: 1200000, type: 'income', category: 'lainnya', date: new Date(Date.now() - 345600000).toISOString() },
+            ];
+          }
+        } catch (e) {
+          transactions = [];
+        }
+      }
+
+      function saveToStorage() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+        } catch (e) {
+          // ignore storage errors (private mode etc.)
+        }
+      }
+
+      // ---------- helpers ----------
+      // Format IDR: no decimals (Rupiah umumnya tanpa sen), thousands separator titik
+      function formatRupiah(value) {
+        const rounded = Math.round(value);
+        return new Intl.NumberFormat('id-ID', {
+          style: 'currency',
+          currency: 'IDR',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        }).format(rounded);
+      }
+
+      // Format number without currency symbol (for editing maybe)
+      function formatNumberID(value) {
+        return new Intl.NumberFormat('id-ID').format(Math.round(value));
+      }
+
+      function formatDate(isoString) {
+        if (!isoString) return '';
+        const d = new Date(isoString);
+        if (isNaN(d.getTime())) return '';
+        return d.toLocaleDateString('id-ID', { month: 'short', day: 'numeric', year: 'numeric' });
+      }
+
+      function generateId() {
+        return Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
+      }
+
+      // ---------- render functions ----------
+      const balanceEl = document.getElementById('balanceDisplay');
+      const totalIncomeEl = document.getElementById('totalIncome');
+      const totalExpenseEl = document.getElementById('totalExpense');
+      const txListEl = document.getElementById('transactionList');
+
+      function calculateTotals() {
+        let income = 0, expense = 0;
+        transactions.forEach(tx => {
+          if (tx.type === 'income') income += tx.amount;
+          else expense += tx.amount;
+        });
+        const balance = income - expense;
+        return { income, expense, balance };
+      }
+
+      function renderSummary() {
+        const { income, expense, balance } = calculateTotals();
+        balanceEl.textContent = formatRupiah(balance);
+        totalIncomeEl.textContent = formatRupiah(income);
+        totalExpenseEl.textContent = formatRupiah(expense);
+        // negative balance style
+        if (balance < 0) {
+          balanceEl.classList.add('negative');
+        } else {
+          balanceEl.classList.remove('negative');
+        }
+      }
+
+      function renderTransactions() {
+        if (!txListEl) return;
+
+        if (transactions.length === 0) {
+          txListEl.innerHTML = `<div class="empty-state">✨ Belum ada transaksi.<br>Tambahkan pemasukan atau pengeluaran pertamamu di atas.</div>`;
+          return;
+        }
+
+        // sort by date descending (newest first), then fallback to id
+        const sorted = [...transactions].sort((a, b) => {
+          const dateA = a.date ? new Date(a.date).getTime() : 0;
+          const dateB = b.date ? new Date(b.date).getTime() : 0;
+          if (dateA !== dateB) return dateB - dateA;
+          return (b.id || '').localeCompare(a.id || '');
+        });
+
+        let html = '';
+        sorted.forEach(tx => {
+          const amountClass = tx.type === 'income' ? 'income' : 'expense';
+          const sign = tx.type === 'income' ? '+' : '−';
+          // Map Indonesian category values to display labels
+          const categoryMap = {
+            makanan: 'Makanan',
+            transportasi: 'Transportasi',
+            belanja: 'Belanja',
+            tagihan: 'Tagihan',
+            hiburan: 'Hiburan',
+            gaji: 'Gaji',
+            lainnya: 'Lainnya'
+          };
+          const categoryLabel = categoryMap[tx.category] || tx.category || 'Lainnya';
+          const dateStr = formatDate(tx.date);
+          const amountFormatted = formatRupiah(tx.amount);
+
+          html += `
+            <div class="transaction-item" data-id="${tx.id}">
+              <div class="tx-left">
+                <div class="tx-desc">
+                  ${escapeHtml(tx.description || 'Tanpa judul')}
+                  <span class="tx-category">${escapeHtml(categoryLabel)}</span>
+                </div>
+                <div class="tx-date">📅 ${escapeHtml(dateStr)}</div>
+              </div>
+              <div class="tx-right">
+                <span class="tx-amount ${amountClass}">${sign}${amountFormatted}</span>
+                <button class="delete-btn" data-id="${tx.id}" title="Hapus transaksi">✕</button>
+              </div>
+            </div>
+          `;
+        });
+
+        txListEl.innerHTML = html;
+      }
+
+      // simple escape to avoid XSS (even though local only, good practice)
+      function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>"]/g, function(m) {
+          if (m === '&') return '&amp;';
+          if (m === '<') return '&lt;';
+          if (m === '>') return '&gt;';
+          if (m === '"') return '&quot;';
+          return m;
+        });
+      }
+
+      // ---------- full render ----------
+      function renderAll() {
+        renderSummary();
+        renderTransactions();
+        saveToStorage();
+      }
+
+      // ---------- toast ----------
+      let toastTimeout;
+      function showToast(message) {
+        const toast = document.getElementById('toast');
+        if (!toast) return;
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+          toast.classList.remove('show');
+        }, 2200);
+      }
+
+      // ---------- event handlers ----------
+      function addTransaction() {
+        const descInput = document.getElementById('descInput');
+        const amountInput = document.getElementById('amountInput');
+        const typeSelect = document.getElementById('typeSelect');
+        const categorySelect = document.getElementById('categorySelect');
+
+        const description = descInput.value.trim();
+        const amountRaw = amountInput.value.trim();
+        const type = typeSelect.value;
+        const category = categorySelect.value;
+
+        // validation
+        if (!description) {
+          showToast('Masukkan deskripsi transaksi.');
+          descInput.focus();
+          return;
+        }
+        if (!amountRaw) {
+          showToast('Masukkan jumlah (Rp).');
+          amountInput.focus();
+          return;
+        }
+        const amount = parseFloat(amountRaw);
+        if (isNaN(amount) || amount <= 0) {
+          showToast('Jumlah harus berupa angka positif.');
+          amountInput.value = '';
+          amountInput.focus();
+          return;
+        }
+
+        // For IDR, we round to nearest whole number (no cents in common use)
+        const roundedAmount = Math.round(amount);
+
+        const newTransaction = {
+          id: generateId(),
+          description: description,
+          amount: roundedAmount,
+          type: type,
+          category: category,
+          date: new Date().toISOString(),
+        };
+
+        transactions.push(newTransaction);
+        renderAll();
+
+        // reset form (but keep type/category as is for convenience)
+        descInput.value = '';
+        amountInput.value = '';
+        descInput.focus();
+        const typeLabel = type === 'income' ? 'Pemasukan' : 'Pengeluaran';
+        showToast(`✅ ${typeLabel} ditambahkan.`);
+      }
+
+      function deleteTransaction(id) {
+        const index = transactions.findIndex(tx => tx.id === id);
+        if (index !== -1) {
+          transactions.splice(index, 1);
+          renderAll();
+          showToast('Transaksi dihapus.');
+        }
+      }
+
+      function clearAllTransactions() {
+        if (transactions.length === 0) {
+          showToast('Tidak ada transaksi untuk dihapus.');
+          return;
+        }
+        if (confirm('Hapus semua transaksi? Tindakan ini tidak bisa dibatalkan.')) {
+          transactions = [];
+          renderAll();
+          showToast('Semua transaksi dihapus.');
+        }
+      }
+
+      // event delegation for delete buttons
+      function handleListClick(e) {
+        const deleteBtn = e.target.closest('.delete-btn');
+        if (deleteBtn) {
+          e.preventDefault();
+          const id = deleteBtn.getAttribute('data-id');
+          if (id) deleteTransaction(id);
+        }
+      }
+
+      // ---------- initialization ----------
+      function init() {
+        loadFromStorage();
+        renderAll();
+
+        // attach listeners
+        const addBtn = document.getElementById('addBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const descInput = document.getElementById('descInput');
+        const amountInput = document.getElementById('amountInput');
+
+        addBtn.addEventListener('click', addTransaction);
+        clearAllBtn.addEventListener('click', clearAllTransactions);
+
+        // allow Enter key in inputs to add
+        [descInput, amountInput].forEach(inp => {
+          inp.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              addTransaction();
+            }
+          });
+        });
+
+        // delete via event delegation
+        const txList = document.getElementById('transactionList');
+        if (txList) {
+          txList.addEventListener('click', handleListClick);
+        }
+
+        // save seed data if first load
+        saveToStorage();
+      }
+
+      // run after DOM ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+</body>
+</html>

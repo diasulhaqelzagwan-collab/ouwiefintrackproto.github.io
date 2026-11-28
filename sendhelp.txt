@@ -1,0 +1,6 @@
+Things to work on:
+- Github Pages website to host it on
+- Backend server?? Something to allow persistent storage without saving to browser
+- isn't website 99% html and javascript??? how do i do anything??????
+- Graph view and Pie-chart view using categories and 
+- 

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinTrack · Grafik</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+    body { background: #f3f6fc; display: flex; justify-content: center; padding: 1rem; min-height: 100vh; }
+    .card { max-width: 900px; width: 100%; background: #fff; border-radius: 2rem; padding: 1.8rem; box-shadow: 0 20px 35px -8px rgba(0,20,50,.15); align-self: flex-start; }
+    h1 { font-size: 1.7rem; color: #0b1e3a; margin-bottom: .25rem; }
+    .source { font-size: .85rem; color: #52637a; margin-bottom: 1.2rem; }
+    .back { display: inline-block; margin-bottom: 1rem; color: #1a4c8c; text-decoration: none; font-size: .9rem; }
+    .stats { display: flex; flex-wrap: wrap; gap: .8rem; margin-bottom: 1.4rem; }
+    .stat { flex: 1 1 160px; background: #f9fcff; border: 1px solid #e2edff; border-radius: 1.2rem; padding: .9rem 1.1rem; }
+    .stat small { display: block; font-size: .75rem; text-transform: uppercase; color: #476085; font-weight: 600; }
+    .stat b { font-size: 1.25rem; color: #0a2540; }
+    .stat b.pos { color: #0f7b3e; } .stat b.neg { color: #b91c1c; }
+    .chart-box { position: relative; height: 360px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1.6rem; font-size: .9rem; }
+    th, td { text-align: right; padding: .5rem .6rem; border-bottom: 1px solid #e4edfb; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #476085; font-size: .75rem; text-transform: uppercase; }
+    .pos { color: #0f7b3e; } .neg { color: #b91c1c; }
+    .table-wrap { overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <a class="back" href="index.html">← Kembali ke FinTrack</a>
+    <h1>📈 Pemasukan vs Pengeluaran</h1>
+    <p class="source" id="source"></p>
+
+    <div class="stats">
+      <div class="stat"><small>Total pemasukan</small><b id="sIncome"></b></div>
+      <div class="stat"><small>Total pengeluaran</small><b id="sExpense"></b></div>
+      <div class="stat"><small>Selisih (surplus / defisit)</small><b id="sNet"></b></div>
+    </div>
+
+    <div class="chart-box"><canvas id="chart"></canvas></div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Bulan</th><th>Pemasukan</th><th>Pengeluaran</th><th>Selisih</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    // ---------- 1. DATA ----------
+    // Same shape as the transactions in index.html (a list of "dicts").
+    const SAMPLE = [
+      { id: 's01', description: 'Gaji bulanan',   amount: 8500000, type: 'income',  category: 'gaji',         date: '2026-06-25T08:00:00.000Z' },
+      { id: 's02', description: 'Sewa kos',       amount: 2400000, type: 'expense', category: 'tagihan',      date: '2026-06-02T08:00:00.000Z' },
+      { id: 's03', description: 'Belanja',        amount: 1800000, type: 'expense', category: 'makanan',      date: '2026-06-12T08:00:00.000Z' },
+      { id: 's04', description: 'Bensin',         amount: 900000,  type: 'expense', category: 'transportasi', date: '2026-06-20T08:00:00.000Z' },
+
+      { id: 's05', description: 'Gaji bulanan',   amount: 8500000, type: 'income',  category: 'gaji',         date: '2026-07-25T08:00:00.000Z' },
+      { id: 's06', description: 'Proyek freelance', amount: 1200000, type: 'income', category: 'lainnya',     date: '2026-07-14T08:00:00.000Z' },
+      { id: 's07', description: 'Sewa kos',       amount: 3000000, type: 'expense', category: 'tagihan',      date: '2026-07-02T08:00:00.000Z' },
+      { id: 's08', description: 'Belanja',        amount: 2200000, type: 'expense', category: 'makanan',      date: '2026-07-10T08:00:00.000Z' },
+      { id: 's09', description: 'Bensin',         amount: 1100000, type: 'expense', category: 'transportasi', date: '2026-07-21T08:00:00.000Z' },
+
+      { id: 's10', description: 'Gaji bulanan',   amount: 8500000, type: 'income',  category: 'gaji',         date: '2026-08-25T08:00:00.000Z' },
+      { id: 's11', description: 'Beli laptop',    amount: 4500000, type: 'expense', category: 'belanja',      date: '2026-08-05T08:00:00.000Z' },
+      { id: 's12', description: 'Belanja',        amount: 3800000, type: 'expense', category: 'makanan',      date: '2026-08-13T08:00:00.000Z' },
+      { id: 's13', description: 'Liburan',        amount: 2400000, type: 'expense', category: 'hiburan',      date: '2026-08-22T08:00:00.000Z' },
+
+      { id: 's14', description: 'Gaji bulanan',   amount: 8500000, type: 'income',  category: 'gaji',         date: '2026-09-25T08:00:00.000Z' },
+      { id: 's15', description: 'Proyek freelance', amount: 800000, type: 'income', category: 'lainnya',      date: '2026-09-09T08:00:00.000Z' },
+      { id: 's16', description: 'Sewa kos',       amount: 3100000, type: 'expense', category: 'tagihan',      date: '2026-09-02T08:00:00.000Z' },
+      { id: 's17', description: 'Belanja',        amount: 2000000, type: 'expense', category: 'makanan',      date: '2026-09-15T08:00:00.000Z' },
+      { id: 's18', description: 'Bensin',         amount: 1200000, type: 'expense', category: 'transportasi', date: '2026-09-23T08:00:00.000Z' },
+
+      { id: 's19', description: 'Gaji bulanan',   amount: 8500000, type: 'income',  category: 'gaji',         date: '2026-10-25T08:00:00.000Z' },
+      { id: 's20', description: 'Sewa kos',       amount: 4900000, type: 'expense', category: 'tagihan',      date: '2026-10-02T08:00:00.000Z' },
+      { id: 's21', description: 'Belanja',        amount: 3500000, type: 'expense', category: 'makanan',      date: '2026-10-11T08:00:00.000Z' },
+      { id: 's22', description: 'Servis motor',   amount: 1500000, type: 'expense', category: 'transportasi', date: '2026-10-19T08:00:00.000Z' },
+
+      { id: 's23', description: 'Gaji bulanan',   amount: 8500000, type: 'income',  category: 'gaji',         date: '2026-11-25T08:00:00.000Z' },
+      { id: 's24', description: 'Proyek freelance', amount: 1200000, type: 'income', category: 'lainnya',     date: '2026-11-08T08:00:00.000Z' },
+      { id: 's25', description: 'Sewa kos',       amount: 2800000, type: 'expense', category: 'tagihan',      date: '2026-11-02T08:00:00.000Z' },
+      { id: 's26', description: 'Belanja',        amount: 2100000, type: 'expense', category: 'makanan',      date: '2026-11-12T08:00:00.000Z' },
+      { id: 's27', description: 'Streaming',      amount: 1000000, type: 'expense', category: 'hiburan',      date: '2026-11-20T08:00:00.000Z' },
+    ];
+
+    // Try the real data saved by index.html first; fall back to SAMPLE.
+    // (Works only when both pages are on the same site, e.g. the same GitHub Pages URL.)
+    const STORAGE_KEY = 'fin_tracker_idr_transactions';
+    let transactions = SAMPLE;
+    let usingSample = true;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        transactions = parsed;
+        usingSample = false;
+      }
+    } catch (e) { /* storage blocked: just use the sample */ }
+
+    document.getElementById('source').textContent = usingSample
+      ? 'Menampilkan data contoh (belum ada data tersimpan dari FinTrack).'
+      : 'Menampilkan data dari FinTrack di browser ini.';
+
+    // ---------- 2. GROUP BY MONTH ----------
+    // Like a Python dict: { '2026-06': {income: 0, expense: 0}, ... }
+    const months = {};
+    transactions.forEach(tx => {
+      const key = String(tx.date).slice(0, 7);          // '2026-06'
+      if (!months[key]) months[key] = { income: 0, expense: 0 };
+      months[key][tx.type === 'income' ? 'income' : 'expense'] += tx.amount;
+    });
+
+    const keys = Object.keys(months).sort();            // oldest -> newest
+    const labels = keys.map(k => {
+      const [y, m] = k.split('-').map(Number);
+      return new Date(y, m - 1, 1).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
+    });
+    const incomeData  = keys.map(k => months[k].income);
+    const expenseData = keys.map(k => months[k].expense);
+
+    // ---------- 3. HELPERS ----------
+    const rupiah = v => new Intl.NumberFormat('id-ID', {
+      style: 'currency', currency: 'IDR', maximumFractionDigits: 0
+    }).format(Math.round(v));
+
+    // ---------- 4. SUMMARY + TABLE ----------
+    const totalIncome  = incomeData.reduce((a, b) => a + b, 0);   // like sum(list)
+    const totalExpense = expenseData.reduce((a, b) => a + b, 0);
+    const net = totalIncome - totalExpense;
+
+    document.getElementById('sIncome').textContent  = rupiah(totalIncome);
+    document.getElementById('sExpense').textContent = rupiah(totalExpense);
+    const netEl = document.getElementById('sNet');
+    netEl.textContent = (net >= 0 ? '+' : '−') + rupiah(Math.abs(net));
+    netEl.className = net >= 0 ? 'pos' : 'neg';
+
+    document.getElementById('rows').innerHTML = keys.map((k, i) => {
+      const diff = incomeData[i] - expenseData[i];
+      return `<tr>
+        <td>${labels[i]}</td>
+        <td>${rupiah(incomeData[i])}</td>
+        <td>${rupiah(expenseData[i])}</td>
+        <td class="${diff >= 0 ? 'pos' : 'neg'}">${diff >= 0 ? '+' : '−'}${rupiah(Math.abs(diff))}</td>
+      </tr>`;
+    }).join('');
+
+    // ---------- 5. CHART ----------
+    new Chart(document.getElementById('chart'), {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Pemasukan',
+            data: incomeData,
+            borderColor: '#0f7b3e',
+            backgroundColor: '#0f7b3e',
+            tension: 0.3,
+          },
+          {
+            label: 'Pengeluaran',
+            data: expenseData,
+            borderColor: '#b23b3b',
+            backgroundColor: '#b23b3b',
+            tension: 0.3,
+            // Shade the gap between this line and dataset 0 (Pemasukan):
+            //   expenses BELOW income -> surplus (green)
+            //   expenses ABOVE income -> deficit (red)
+            fill: {
+              target: 0,
+              above: 'rgba(185, 28, 28, 0.20)',
+              below: 'rgba(15, 123, 62, 0.20)',
+            },
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${rupiah(c.parsed.y)}` } },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { callback: v => (v / 1000) + ' k' },   // 8500000 -> "8.5 jt"
+          },
+        },
+      },
+    });
+  </script>
+</body>
+</html>
